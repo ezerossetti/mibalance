@@ -1,0 +1,39 @@
+.gradient-custom-2{
+
+    background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
+
+                      /* Ruta a tu imagen (asegúrate de que coincida con tu imagen) */
+                      url('/assets/hombre.png');
+
+    /* Ajusta la imagen para que cubra todo el contenedor */
+    background-size: cover;
+
+    /* Centra la imagen en el contenedor */
+    background-position: center;
+
+    /* Evita que la imagen se repita si no cubre todo el espacio */
+    background-repeat: no-repeat;
+
+    /* (Opcional) Si en algún @media (min-width: 769px) tienes border-radius, déjalo ahí
+       Si no, puedes añadirlo aquí si quieres las esquinas redondeadas en la columna de la imagen. */
+    border-top-right-radius: .3rem;
+    border-bottom-right-radius: .3rem;
+}
+.btn-login-custom {
+    background-color: #000;
+    color: #fff;
+    border: none;
+}
+@media (min-width: 768px) {
+.gradient-form {
+height: 100vh !important;
+}
+}
+@media (min-width: 769px) {
+.gradient-custom-2 {
+border-top-right-radius: .3rem;
+border-bottom-right-radius: .3rem;
+}
+}
+
+
