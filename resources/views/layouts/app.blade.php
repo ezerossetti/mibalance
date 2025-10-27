@@ -53,6 +53,9 @@
                 <a href="{{ route('reportes.index') }}" class="list-group-item list-group-item-action bg-dark sidebar-item {{ request()->is('reportes*') ? 'active' : '' }}">
                     <i class="bi bi-file-earmark-bar-graph-fill me-2"></i>Reportes
                 </a>
+                <a href="{{ route('alertas.index') }}" class="list-group-item list-group-item-action bg-dark sidebar-item {{ request()->is('alertas*') ? 'active' : '' }}">
+    <i class="bi bi-bell-fill me-2"></i>Mis Alertas
+</a>
 
                 <div class="mt-auto">
                     <a href="{{ route('perfil.edit') }}" class="list-group-item list-group-item-action bg-dark sidebar-item {{ request()->is('perfil*') ? 'active' : '' }}">

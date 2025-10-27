@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use App\Models\Transaccion;
+use App\Models\Alerta;
 
 class User extends Authenticatable
 {
@@ -76,4 +77,10 @@ const UPDATED_AT = null; // Indícaselo si no tienes una columna updated_at
     {
     return $this->hasMany(Categoria::class, 'idUsuario', 'idUsuario');
     }
+
+    public function alertas()
+{
+    // Un usuario puede tener muchas alertas
+    return $this->hasMany(Alerta::class, 'idUsuario', 'idUsuario');
+}
 }

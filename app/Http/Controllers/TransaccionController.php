@@ -2,11 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Categoria;
 use App\Models\Transaccion;
 use App\Models\FormaPago;
+use App\Models\Alerta;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
+
 
 class TransaccionController extends Controller
 {
@@ -73,6 +77,13 @@ class TransaccionController extends Controller
         $transaccion->alias_destinatario = $request->alias_destinatario;
         $transaccion->nombre_destinatario = $request->nombre_destinatario;
         $transaccion->save();
+
+        // Verificamos solo si la transacción guardada es un Gasto
+        $categoriaGuardada = Categoria::find($transaccion->idcategoria); // Necesitamos la categoría
+        if ($categoriaGuardada && $categoriaGuardada->tipo_categoria == 'Gasto') {
+        // Pasamos el ID de la categoría y la fecha (convertida a Carbon)
+        $this->verificarAlertas($transaccion->idcategoria, Carbon::parse($transaccion->fecha));
+}
 
         return redirect()->route('transaccions.index')->with('success', '¡Transacción(es) registrada(s) exitosamente!');
     }
@@ -141,6 +152,14 @@ class TransaccionController extends Controller
             abort(403, 'Acción no autorizada.');
         }
         $transaccion->delete();
+
+        // Obtenemos la categoría ANTES de borrar (si es borrado grupal, tomamos la de la $transaccion original)
+        $categoriaBorrada = $transaccion->categoria;
+        if ($categoriaBorrada && $categoriaBorrada->tipo_categoria == 'Gasto') {
+        // Verificamos usando el ID de la categoría y la fecha de la transacción borrada
+        $this->verificarAlertas($categoriaBorrada->idcategoria, Carbon::parse($transaccion->fecha));
+}
+
         return redirect()->route('transaccions.index')
                          ->with('success', '¡Transacción eliminada exitosamente!');
     }
@@ -223,4 +242,46 @@ public function exportCSV(Request $request)
 
         return response()->stream($callback, 200, $headers);
     }
+    /**
+ * Verifica si se disparó alguna alerta para una categoría y mes específicos.
+ * Guarda un mensaje en la sesión si se supera el límite.
+ *
+ * @param int $idCategoria El ID de la categoría a verificar.
+ * @param Carbon $fecha La fecha de la transacción (para saber el mes y año).
+ * @return void
+ */
+private function verificarAlertas(int $idCategoria, Carbon $fecha)
+{
+    // Busca si hay una alerta activa para esta categoría y usuario
+    $alerta = Alerta::where('idUsuario', Auth::id())
+                    ->where('idcategoria', $idCategoria)
+                    ->where('activa', true)
+                    ->first(); // Obtenemos la primera alerta activa (debería ser única por categoría)
+
+    // Si no hay alerta definida para esta categoría, no hacemos nada
+    if (!$alerta) {
+        return;
+    }
+
+    // Calculamos el total gastado en esta categoría durante el mes de la transacción
+    $totalGastadoMes = Transaccion::where('idUsuario', Auth::id())
+                            ->where('idcategoria', $idCategoria)
+                            ->whereYear('fecha', $fecha->year)
+                            ->whereMonth('fecha', $fecha->month)
+                            ->whereHas('categoria', function ($q) { // Nos aseguramos de sumar solo gastos
+                                $q->where('tipo_categoria', 'Gasto');
+                            })
+                            ->sum('monto');
+
+    // Comparamos el total gastado con el límite de la alerta
+    if ($totalGastadoMes > $alerta->limite) {
+        // Si se superó el límite, guardamos un mensaje de advertencia en la sesión
+        // Usamos 'warning' como clave para distinguirlo de los mensajes 'success'
+        session()->flash('warning',
+            "¡Alerta! Superaste el límite de $" . number_format($alerta->limite, 2, ',', '.') .
+            " para la categoría '" . ($alerta->categoria->nombre ?? 'N/A') .
+            "' este mes (Llevas gastado $" . number_format($totalGastadoMes, 2, ',', '.') . ")."
+        );
+    }
+}
 }

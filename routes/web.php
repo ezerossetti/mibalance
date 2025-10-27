@@ -8,6 +8,7 @@ use App\Http\Controllers\TransaccionController;
 use App\Http\Controllers\FormaPagoController;
 use App\Http\Controllers\ReporteController;
 use App\Http\Controllers\PerfilController;
+use App\Http\Controllers\AlertaController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -27,4 +28,5 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/perfil', [PerfilController::class, 'update'])->name('perfil.update');
     Route::get('/transaccions/export/pdf', [TransaccionController::class, 'exportPDF'])->name('transaccions.export.pdf');
     Route::get('/transaccions/export/csv', [TransaccionController::class, 'exportCSV'])->name('transaccions.export.csv');
+    Route::resource('alertas', AlertaController::class);
 });
