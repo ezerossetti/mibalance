@@ -74,7 +74,7 @@ class TransaccionController extends Controller
         $transaccion->nombre_destinatario = $request->nombre_destinatario;
         $transaccion->save();
 
-        return redirect('/home')->with('success', '¡Transacción registrada exitosamente!');
+        return redirect()->route('transaccions.index')->with('success', '¡Transacción(es) registrada(s) exitosamente!');
     }
 
     /**
