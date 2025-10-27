@@ -2,8 +2,17 @@
 
 @section('content')
 <div class="container">
+    {{-- Muestra mensaje de éxito si existe en la sesión --}}
+    @if (session('success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
     <div class="row justify-content-center">
         <div class="col-md-12">
+            {{-- Título y Botón Rápido --}}
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                     Bienvenido de Nuevo, {{ Auth::user()->nombre }} !
@@ -13,6 +22,7 @@
                 </a>
             </div>
 
+            {{-- Fila de Tarjetas de Resumen --}}
             <div class="row">
                 <div class="col-md-4 mb-3">
                     <div class="card text-white bg-success">
@@ -34,13 +44,15 @@
                     <div class="card text-white bg-primary">
                         <div class="card-body">
                             <h3 class="card-title" style="font-size: 1.75rem; font-weight: bold;">$ {{ number_format($saldoTotal, 2, ',', '.') }}</h3>
-                            <p class="card-text">Saldo Total</p>
+                            <p class="card-text">Saldo Total (Histórico)</p>
                         </div>
                     </div>
                 </div>
             </div>
 
+            {{-- Fila para Gráfico de Torta, Top Categorías y Últimas Transacciones --}}
             <div class="row mt-4">
+                {{-- Columna para el Gráfico de Torta y Top Categorías --}}
                 <div class="col-lg-5 mb-4">
                     <div class="card h-100">
                         <div class="card-header">Gastos por Categoría (Mes Actual)</div>
@@ -67,6 +79,7 @@
                     </div>
                 </div>
 
+                {{-- Columna para la Tabla de Últimas Transacciones --}}
                 <div class="col-lg-7 mb-4">
                     <div class="card h-100">
                         <div class="card-header d-flex justify-content-between align-items-center">
@@ -98,8 +111,9 @@
                         </div>
                     </div>
                 </div>
-            </div>
+            </div> {{-- Cierre Fila Gráfico Torta y Tabla --}}
 
+            {{-- Fila para Gráfico de Tendencia --}}
             <div class="row mt-4">
                 <div class="col-12">
                     <div class="card">
@@ -111,13 +125,15 @@
                 </div>
             </div>
 
-        </div>
-    </div>
-</div>
+        </div> {{-- Cierre col-md-12 --}}
+    </div> {{-- Cierre row justify-content-center --}}
+</div> {{-- Cierre container --}}
 
+{{-- Scripts para inicializar los gráficos --}}
 @push('scripts')
 <script>
     document.addEventListener("DOMContentLoaded", function() {
+        // Gráfico de Torta (Gastos por Categoría)
         const canvasTorta = document.getElementById('gastosChart');
         if (canvasTorta && @json($dataGraficoTorta->isNotEmpty())) {
             new Chart(canvasTorta.getContext('2d'), {
@@ -132,6 +148,7 @@
             });
         }
 
+        // Gráfico de Barras (Tendencia Mensual)
         const canvasBarras = document.getElementById('tendenciaChart');
         if (canvasBarras) {
             new Chart(canvasBarras.getContext('2d'), {
