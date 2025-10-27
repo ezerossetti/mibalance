@@ -34,7 +34,7 @@
                     <div class="card text-white bg-primary">
                         <div class="card-body">
                             <h3 class="card-title" style="font-size: 1.75rem; font-weight: bold;">$ {{ number_format($saldoTotal, 2, ',', '.') }}</h3>
-                            <p class="card-text">Saldo Total (Histórico)</p>
+                            <p class="card-text">Saldo Total</p>
                         </div>
                     </div>
                 </div>
