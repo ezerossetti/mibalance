@@ -39,6 +39,7 @@ class TransaccionController extends Controller
         $transaccions = $query->orderBy('fecha', 'desc')->get();
         $categorias_filtro = Auth::user()->categorias;
 
+
         return view('transaccions.index', compact('transaccions', 'categorias_filtro'));
     }
 

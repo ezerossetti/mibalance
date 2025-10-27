@@ -1,5 +1,3 @@
-<php
-
 @extends('layouts.app')
 
 @section('content')
@@ -8,12 +6,15 @@
     <div class="card-header d-flex justify-content-between align-items-center">
         <span>Mis Transacciones</span>
         <div>
+            {{-- Botón Exportar PDF (incluye los parámetros de filtro actuales) --}}
             <a href="{{ route('transaccions.export.pdf', request()->query()) }}" class="btn btn-danger btn-sm">
                 <i class="bi bi-file-earmark-pdf-fill"></i> PDF
             </a>
+            {{-- Botón Exportar CSV (incluye los parámetros de filtro actuales) --}}
             <a href="{{ route('transaccions.export.csv', request()->query()) }}" class="btn btn-success btn-sm">
                 <i class="bi bi-file-earmark-spreadsheet-fill"></i> CSV
             </a>
+            {{-- Botón Nueva Transacción --}}
             <a href="{{ route('transaccions.create') }}" class="btn btn-primary btn-sm ms-2">
                 + Nueva Transacción
             </a>
@@ -30,7 +31,7 @@
             </div>
         @endif
 
-        {{-- ¡AQUÍ ESTÁ LA SOLUCIÓN! MUESTRA MENSAJE DE ALERTA (WARNING) SI EXISTE --}}
+        {{-- MUESTRA MENSAJE DE ALERTA (WARNING) SI EXISTE --}}
         @if (session('warning'))
             <div class="alert alert-warning alert-dismissible fade show" role="alert">
                 <i class="bi bi-exclamation-triangle-fill me-2"></i>
@@ -38,7 +39,6 @@
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         @endif
-        {{-- FIN DE LA SOLUCIÓN --}}
 
         {{-- Formulario de Filtros --}}
         <form method="GET" action="{{ route('transaccions.index') }}" class="row g-3 mb-4 align-items-center">
@@ -98,6 +98,7 @@
                             @endif
                         </td>
                         <td>{{ $transaccion->categoria->nombre ?? 'N/A' }}</td>
+                        {{-- Celda de Descripción con info extra --}}
                         <td>
                             {{ $transaccion->descripcion }}
                             @if ($transaccion->alias_destinatario)
@@ -109,6 +110,7 @@
                                  <small class="d-block text-muted fst-italic">En 1 cuota</small>
                             @endif
                         </td>
+                        {{-- Botones de Acción --}}
                         <td>
                             <a href="{{ route('transaccions.edit', $transaccion->idtransaccion) }}" class="btn btn-warning btn-sm" title="Editar">
                                 <i class="bi bi-pencil-fill"></i>
