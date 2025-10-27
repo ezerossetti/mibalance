@@ -12,13 +12,16 @@
     @endif
 
     {{-- MUESTRA MENSAJE DE ALERTA (WARNING) SI EXISTE --}}
-    @if (session('warning'))
+    @if (!empty($alertasDisparadas))
+    {{-- Recorremos el array de alertas y mostramos una por cada una --}}
+    @foreach ($alertasDisparadas as $mensajeWarning)
         <div class="alert alert-warning alert-dismissible fade show" role="alert">
             <i class="bi bi-exclamation-triangle-fill me-2"></i>
-            <strong>¡ADVERTENCIA!</strong> {{ session('warning') }}
+            <strong>¡ADVERTENCIA!</strong> {{ $mensajeWarning }}
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
-    @endif
+    @endforeach
+@endif
 
     <div class="row justify-content-center">
         <div class="col-md-12">

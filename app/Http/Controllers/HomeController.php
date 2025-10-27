@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use App\Models\Alerta;
 
 class HomeController extends Controller
 
@@ -25,22 +26,27 @@ class HomeController extends Controller
      *
      * @return \Illuminate\Contracts\Support\Renderable
      */
-   public function index()
+   public function index() // Quitamos Request $request
 {
     $user = Auth::user();
     $now = Carbon::now();
+    Carbon::setLocale('es'); // Forzamos español para los meses
 
+    // --- Cálculos de las tarjetas (Mes Actual) ---
     $ingresosMes = $user->transaccions()->whereYear('fecha', $now->year)->whereMonth('fecha', $now->month)->whereHas('categoria', function ($q) { $q->where('tipo_categoria', 'Ingreso'); })->sum('monto');
     $gastosMes = $user->transaccions()->whereYear('fecha', $now->year)->whereMonth('fecha', $now->month)->whereHas('categoria', function ($q) { $q->where('tipo_categoria', 'Gasto'); })->sum('monto');
 
+    // --- Saldo Total (Histórico) ---
     $totalIngresos = $user->transaccions()->whereHas('categoria', function ($q) { $q->where('tipo_categoria', 'Ingreso'); })->sum('monto');
     $totalGastos = $user->transaccions()->whereHas('categoria', function ($q) { $q->where('tipo_categoria', 'Gasto'); })->sum('monto');
     $saldoTotal = $totalIngresos - $totalGastos;
 
+    // --- Transacciones Recientes (Últimas 5 del mes actual) ---
     $transaccionesRecientes = $user->transaccions()->with('categoria')
                                 ->whereYear('fecha', $now->year)->whereMonth('fecha', $now->month)
                                 ->latest('fecha')->take(5)->get();
 
+    // --- Datos para el Gráfico de Torta (Gastos del Mes Actual por Categoría) ---
     $gastosPorCategoria = DB::table('transaccion')
         ->join('categoria', 'transaccion.idcategoria', '=', 'categoria.idcategoria')
         ->where('transaccion.idUsuario', $user->idUsuario)
@@ -55,21 +61,48 @@ class HomeController extends Controller
     $dataGraficoTorta = $gastosPorCategoria->pluck('total');
     $topCategoriasGasto = $gastosPorCategoria->take(5);
 
+    // --- Datos para el Gráfico de Tendencia (Últimos 6 Meses) ---
     $mesesTendencia = [];
     $ingresosTendencia = [];
     $gastosTendencia = [];
     for ($i = 5; $i >= 0; $i--) {
         $fechaMes = Carbon::now()->subMonths($i);
-        $mesesTendencia[] = $fechaMes->translatedFormat('M');
+        $mesesTendencia[] = ucfirst($fechaMes->translatedFormat('M'));
         $ingresosTendencia[] = $user->transaccions()->whereYear('fecha', $fechaMes->year)->whereMonth('fecha', $fechaMes->month)->whereHas('categoria', function($q){ $q->where('tipo_categoria', 'Ingreso'); })->sum('monto');
         $gastosTendencia[] = $user->transaccions()->whereYear('fecha', $fechaMes->year)->whereMonth('fecha', $fechaMes->month)->whereHas('categoria', function($q){ $q->where('tipo_categoria', 'Gasto'); })->sum('monto');
     }
 
+    // --- ¡NUEVA LÓGICA DE VERIFICACIÓN DE ALERTAS! ---
+    $alertasDisparadas = []; // Array para guardar los mensajes de advertencia
+    $alertasActivas = $user->alertas()->with('categoria')->get(); // Obtenemos todas las alertas del usuario
+
+    foreach ($alertasActivas as $alerta) {
+        // Calculamos el total gastado ESTE MES para la categoría de la alerta
+        $totalGastadoCategoria = $user->transaccions()
+                                    ->where('idcategoria', $alerta->idcategoria)
+                                    ->whereYear('fecha', $now->year)
+                                    ->whereMonth('fecha', $now->month)
+                                    ->whereHas('categoria', function ($q) {
+                                        $q->where('tipo_categoria', 'Gasto');
+                                    })
+                                    ->sum('monto');
+
+        // Si el gasto supera el límite, agregamos un mensaje al array
+        if ($totalGastadoCategoria > $alerta->limite) {
+            $alertasDisparadas[] = "Superaste el límite de $" . number_format($alerta->limite, 2, ',', '.') .
+                                   " en la categoría '" . $alerta->categoria->nombre .
+                                   "' (llevas $" . number_format($totalGastadoCategoria, 2, ',', '.') . ").";
+        }
+    }
+    // --- FIN DE LA LÓGICA DE ALERTAS ---
+
+    // --- Pasamos todo a la vista ---
     return view('home', compact(
         'ingresosMes', 'gastosMes', 'saldoTotal', 'transaccionesRecientes',
         'labelsGraficoTorta', 'dataGraficoTorta',
         'topCategoriasGasto',
-        'mesesTendencia', 'ingresosTendencia', 'gastosTendencia'
+        'mesesTendencia', 'ingresosTendencia', 'gastosTendencia',
+        'alertasDisparadas' // <-- Pasamos el array de mensajes a la vista
     ));
 }
 }
